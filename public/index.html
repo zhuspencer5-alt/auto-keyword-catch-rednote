@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图文内容关键词分析工具</title>
+    <!-- 引入TailwindCSS简化样式 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white p-8 rounded-2xl shadow-xl">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">📊 内容关键词分析工具</h1>
+                <p class="text-gray-600">支持小红书 & 公众号文章分析</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="urlInput" class="block text-sm font-medium text-gray-700 mb-2">
+                        文章链接
+                    </label>
+                    <input 
+                        type="text" 
+                        id="urlInput" 
+                        placeholder="粘贴小红书或公众号文章链接（例如：https://www.xiaohongshu.com/...）" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    >
+                </div>
+
+                <button 
+                    onclick="analyzeUrl()" 
+                    id="analyzeBtn"
+                    class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                    🔍 开始分析
+                </button>
+            </div>
+
+            <!-- 加载状态 -->
+            <div id="loading" class="mt-6 hidden">
+                <div class="flex items-center justify-center space-x-3 text-blue-600">
+                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="font-medium">正在分析中，请稍候...</span>
+                </div>
+            </div>
+
+            <!-- 结果展示区 -->
+            <div id="result" class="mt-8 hidden">
+                <div class="border-t pt-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">📈 分析结果</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+                            <p class="text-sm text-purple-600 font-medium mb-1">阅读量</p>
+                            <p class="text-2xl font-bold text-purple-700" id="readCount">-</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+                            <p class="text-sm text-green-600 font-medium mb-1">评论数</p>
+                            <p class="text-2xl font-bold text-green-700" id="commentCount">-</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg">
+                        <p class="text-sm text-blue-600 font-medium mb-3">🏷️ 核心关键词</p>
+                        <div id="keywords" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <div id="contentPreview" class="mt-4 bg-gray-50 p-4 rounded-lg hidden">
+                        <p class="text-sm text-gray-600 font-medium mb-2">📝 内容预览</p>
+                        <p class="text-sm text-gray-700 line-clamp-3" id="contentText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 错误提示 -->
+            <div id="error" class="mt-6 hidden">
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    <p class="font-medium">❌ 分析失败</p>
+                    <p class="text-sm mt-1" id="errorMessage"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="mt-6 bg-white p-6 rounded-2xl shadow-lg">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">💡 使用说明</h3>
+            <ul class="space-y-2 text-sm text-gray-600">
+                <li class="flex items-start">
+                    <span class="mr-2">1.</span>
+                    <span>复制小红书笔记或公众号文章的完整链接</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-2">2.</span>
+                    <span>粘贴到输入框中，点击"开始分析"按钮</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-2">3.</span>
+                    <span>等待几秒钟，系统会自动提取关键词和数据</span>
+                </li>
+                <li class="flex items-start text-orange-600">
+                    <span class="mr-2">⚠️</span>
+                    <span>注意：需要配置有效的第三方API密钥才能正常使用</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 调用后端接口
+        async function analyzeUrl() {
+            const url = document.getElementById('urlInput').value.trim();
+            
+            // 验证输入
+            if (!url) {
+                showError("请输入文章链接！");
+                return;
+            }
+
+            // 简单验证链接格式
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                showError("请输入有效的链接地址（需以 http:// 或 https:// 开头）");
+                return;
+            }
+
+            // 隐藏之前的结果和错误
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('contentPreview').classList.add('hidden');
+            
+            // 显示加载状态
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('analyzeBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    throw new Error(data.error || '分析失败');
+                }
+
+                // 渲染结果
+                document.getElementById('readCount').textContent = formatNumber(data.readCount) || '未知';
+                document.getElementById('commentCount').textContent = formatNumber(data.commentCount) || '未知';
+                
+                // 渲染关键词标签
+                const keywordsContainer = document.getElementById('keywords');
+                keywordsContainer.innerHTML = '';
+                if (data.keywords && data.keywords.length > 0) {
+                    data.keywords.forEach(keyword => {
+                        const tag = document.createElement('span');
+                        tag.className = 'bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium';
+                        tag.textContent = keyword;
+                        keywordsContainer.appendChild(tag);
+                    });
+                } else {
+                    keywordsContainer.textContent = '暂无关键词';
+                }
+
+                // 如果有内容预览，显示它
+                if (data.contentPreview) {
+                    document.getElementById('contentText').textContent = data.contentPreview;
+                    document.getElementById('contentPreview').classList.remove('hidden');
+                }
+
+                document.getElementById('result').classList.remove('hidden');
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                // 隐藏加载状态
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('analyzeBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        // 格式化数字（添加千分位）
+        function formatNumber(num) {
+            // 只检查 null 和 undefined，0 是有效的数值
+            if (num === null || num === undefined) return '0';
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // 支持回车键提交
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeUrl();
+            }
+        });
+    </script>
+</body>
+</html>
+
