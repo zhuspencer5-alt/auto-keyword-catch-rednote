@@ -33,10 +33,15 @@ async function parseUrlContent(url) {
         if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) {
             // 小红书解析
             // 这里需要集成第三方API，例如：芝士数据、蝉妈妈、新红数据
-            // 示例代码（需要替换为实际的API）
-            if (THIRD_PARTY_API_KEY) {
+            // 判断是否配置了真实的API密钥（排除占位符）
+            const hasRealApiKey = THIRD_PARTY_API_KEY && 
+                                  !THIRD_PARTY_API_KEY.includes('your_') && 
+                                  !THIRD_PARTY_API_KEY.includes('here') &&
+                                  THIRD_PARTY_API_KEY.length > 10;
+            
+            if (hasRealApiKey) {
                 // TODO: 替换为实际的第三方API调用
-                // 当配置了API密钥时，调用真实的第三方API
+                // 当配置了真实API密钥时，调用真实的第三方API
                 // const res = await axios.get('https://api.example.com/xiaohongshu/parse', {
                 //     params: { url, apiKey: THIRD_PARTY_API_KEY }
                 // });
@@ -47,7 +52,7 @@ async function parseUrlContent(url) {
                 // 暂时抛出错误提示，提醒开发者需要实现真实的API调用
                 throw new Error('请在代码中实现真实的小红书API调用逻辑');
             } else {
-                // 未配置API密钥时，使用模拟数据作为演示
+                // 未配置真实API密钥时，使用模拟数据作为演示
                 console.warn('未配置第三方API密钥，使用模拟数据');
                 content = "这是一篇关于小红书内容营销的文章。文章详细介绍了如何通过优质内容吸引用户关注，提升品牌影响力。文章提到了内容创作的技巧、用户互动的重要性以及数据分析的方法。";
                 readCount = Math.floor(Math.random() * 10000) + 1000;
@@ -56,9 +61,15 @@ async function parseUrlContent(url) {
         } else if (url.includes('mp.weixin.qq.com')) {
             // 公众号解析
             // 这里需要集成第三方API，例如：新榜、清博指数、微小宝
-            if (THIRD_PARTY_API_KEY) {
+            // 判断是否配置了真实的API密钥（排除占位符）
+            const hasRealApiKey = THIRD_PARTY_API_KEY && 
+                                  !THIRD_PARTY_API_KEY.includes('your_') && 
+                                  !THIRD_PARTY_API_KEY.includes('here') &&
+                                  THIRD_PARTY_API_KEY.length > 10;
+            
+            if (hasRealApiKey) {
                 // TODO: 替换为实际的第三方API调用
-                // 当配置了API密钥时，调用真实的第三方API
+                // 当配置了真实API密钥时，调用真实的第三方API
                 // const res = await axios.get('https://api.example.com/weixin/parse', {
                 //     params: { url, apiKey: THIRD_PARTY_API_KEY }
                 // });
@@ -69,7 +80,7 @@ async function parseUrlContent(url) {
                 // 暂时抛出错误提示，提醒开发者需要实现真实的API调用
                 throw new Error('请在代码中实现真实的公众号API调用逻辑');
             } else {
-                // 未配置API密钥时，使用模拟数据作为演示
+                // 未配置真实API密钥时，使用模拟数据作为演示
                 console.warn('未配置第三方API密钥，使用模拟数据');
                 content = "这是一篇公众号文章，讨论了微信营销的最佳实践。文章分析了公众号运营的核心要素，包括内容定位、粉丝互动、推送时机等。作者分享了多个成功案例和实用技巧。";
                 readCount = Math.floor(Math.random() * 50000) + 5000;
