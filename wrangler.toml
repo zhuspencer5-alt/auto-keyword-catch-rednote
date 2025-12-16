@@ -1,0 +1,13 @@
+# Cloudflare Pages 配置文件
+
+name = "auto-keyword-catch-rednote"
+compatibility_date = "2025-12-16"
+
+# Pages 静态资源配置
+[site]
+bucket = "./public"
+
+# Functions 路由配置
+[[routes]]
+pattern = "/api/*"
+
